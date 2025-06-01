@@ -1,23 +1,46 @@
-from generators.utils import make_mask
 import numpy as np
-def build_master_equation_model(dimensions, shape, transitions, verbose=False):
-    mask = make_mask(dimensions)
-    def J(states, _):
-        P = np.reshape(states, shape)
-        j = np.zeros(shape)
-        with np.nditer(P, flags=['multi_index']) as it:
-            for _ in it:
-                cell = it.multi_index
-                for t in transitions:
-                    origin = np.array(cell) - mask(t.dirs)
-                    if np.any(np.array(shape)==origin):
-                        continue
-                    if np.any(origin==-1):
-                        continue
-                    dj = P[tuple(origin)] * t.func(*np.extract(mask(t.dirs), origin))
-                    if verbose:
-                        print(f't={t}:{origin}--[{dj}]-->{cell}')
-                    j[cell] += dj
-                    j[tuple(origin)] -= dj
-        return j.flatten()
-    return J
+from scipy.integrate import odeint
+from generators.model import Model
+class MasterEquationModel(Model):
+    def __init__(self, dimensions, shape, transitions, verbose=False):
+        super().__init__(dimensions, shape, transitions, verbose=verbose)
+        def J(states, _):
+            P = np.reshape(states, shape)
+            j = np.zeros(shape)
+            with np.nditer(P, flags=['multi_index']) as it:
+                for _ in it:
+                    cell = it.multi_index
+                    for t in transitions:
+                        origin = np.array(cell) - self.mask(t.dirs)
+                        if np.any(np.array(shape)==origin):
+                            continue
+                        if np.any(origin==-1):
+                            continue
+                        dj = P[tuple(origin)] * t.func(*np.extract(self.mask(t.dirs), origin))
+                        if verbose:
+                            print(f't={t}:{origin}--[{dj}]-->{cell}')
+                        j[cell] += dj
+                        j[tuple(origin)] -= dj
+            return j.flatten()
+        self.J = J
+    
+    def empty_world(self):
+        return np.zeros(self.shape)
+    
+    def run(self, P0: np.ndarray, T):
+        ts = np.linspace(0, T, 4*T)
+        self.result = np.reshape(
+            odeint(self.J, P0.flatten(), ts),
+            (len(ts), *self.shape)
+        )
+
+    def time_series(self, axis):
+        ax = self.dimensions.index(axis)
+        N = self.shape[ax]
+        dists = np.sum(self.result, axis=tuple(np.array((set(range(self.rank))-{ax}))+1))
+        support = np.reshape(range(N), (1,N))
+        return np.sum(dists*support, axis=1)
+    
+    def distribution(self, axis):
+        ax = self.dimensions.index(axis)
+        return np.sum(self.result[-1], axis=tuple((set(range(self.rank))-{ax})))
