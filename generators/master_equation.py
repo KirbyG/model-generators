@@ -37,7 +37,7 @@ class MasterEquationModel(Model):
     def time_series(self, axis):
         ax = self.dimensions.index(axis)
         N = self.shape[ax]
-        dists = np.sum(self.result, axis=tuple(np.array((set(range(self.rank))-{ax}))+1))
+        dists = np.sum(self.result, axis=tuple(np.array(list((set(range(self.rank))-{ax})))+1))
         support = np.reshape(range(N), (1,N))
         return np.sum(dists*support, axis=1)
     

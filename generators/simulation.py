@@ -23,28 +23,30 @@ class SimModel(Model):
         for _ in range(trials):
             t = 0
             vec = np.copy(initial_conditions)
-            trial = np.copy(vec)
+            trial = np.concatenate(([t], vec))
             while t < T:
                 dt, dP = self.J(vec)
                 t += dt
                 vec += dP
-                trial = np.vstack((trial, [t].append(vec)))
+                trial = np.vstack((trial, np.concatenate(([t], vec))))
             result.append(trial)
-        return result #List of time series of vector
+        self.result = result #List of time series of vector
     
     def time_series(self, axis):
         ax = self.dimensions.index(axis)
         ts = []
         vs = []
         for trial in self.result:
-            ts.append(trial[:, 0])
-            vs.append(trial[:, ax+1])
+            ts += list(trial[:, 0])
+            vs += list(trial[:, ax+1])
         return ts, vs
     
     def distribution(self, axis):
         ax = self.dimensions.index(axis)
         vs = []
         for trial in self.result:
-            vs.append(trial[-1][axis])
-        counts = np.bincount(vs, minlength=self.shape[ax])
+            vs.append(trial[-1][ax+1])
+        counts = np.bincount(vs, minlength=3*int(max(vs)))
+        print(vs)
+        print(counts)
         return counts / len(vs)

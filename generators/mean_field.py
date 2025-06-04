@@ -25,6 +25,4 @@ class MeanFieldModel(Model):
     def distribution(self, axis):
         ax = self.dimensions.index(axis)
         mean = self.result[-1, ax]
-        dist = np.zeros(int(3*mean))
-        dist[int(mean)] = 1
-        return dist
+        return mean

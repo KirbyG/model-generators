@@ -1,20 +1,19 @@
-from generators.utils import Transition, DEC, INC, Dir, to_linear, to_shaped
+# IMPORTS
+from generators.utils import Transition, DEC, INC, Dir
 
-from generators.mean_field import build_mean_field_model
-from generators.master_equation import build_master_equation_model
-from generators.simulation import build_simulation_model
-from generators.hybrid import build_hybrid_model
+from generators.mean_field import MeanFieldModel
+from generators.master_equation import MasterEquationModel
+from generators.simulation import SimModel
+from generators.hybrid import HybridModel
 
-import numpy as np
-from scipy.integrate import odeint
-import pickle
+import dill
 
+# SETUP
 K = 20
 μ, ν, β = 0.04, 0.4, 0.06
 n_c = 3
 N = 20
 T = 100
-ts = np.linspace(0, T, 200)
 
 dimensions = ['fish', 'shark']
 shape = (n_c, n_c)
@@ -24,50 +23,41 @@ transitions = [
     Transition({Dir('fish', DEC), Dir('shark', INC)}, lambda f,s: β*f*s),
 ]
 
-J_MF = build_mean_field_model(dimensions, transitions)
-J_ME = build_master_equation_model(dimensions, (N,N), transitions)
-J_hybrid = build_hybrid_model(dimensions, shape, transitions)
-J_sim = build_simulation_model(dimensions, transitions)
+# MODELS
+MF = MeanFieldModel(dimensions, None, transitions)
+means = MF.empty_world()
+means[0] = 12
+means[1] = 8
+MF.run(means, T)
 
+ME = MasterEquationModel(dimensions, (N,N), transitions)
+P0 = ME.empty_world()
+P0[12, 8] = 1
+ME.run(P0, T)
 
-raw_MF = odeint(build_mean_field_model(dimensions, transitions), [12, 8], ts)
+hybrid = HybridModel(dimensions, shape, transitions)
+P, M = hybrid.empty_world()
+P[n_c, n_c] = 1
+M[n_c, n_c][0] = 12
+M[n_c, n_c][1] = 8
+M[n_c, :, :] = 3
+M[:, n_c, :] = 3
+hybrid.run((P, M), T)
 
-P0_ME = np.zeros((N,N))
-P0_ME[12, 8] = 1
-P0_ME = np.reshape(P0_ME, (N**2))
-raw_ME = odeint(J_ME, P0_ME, ts)
+sim = SimModel(dimensions, transitions)
+values = sim.empty_world()
+values[0] = 12
+values[1] = 8
+sim.run(values, T)
 
-vec0 = np.zeros(((1+2)*(n_c+1)**2))
-P0, M0 = to_shaped(vec0, shape)
-P0[-1,-1] = 1
-M0[-1,:,0] = 3
-M0[:,-1,1] = 3
-M0[-1,-1,0] = 12
-M0[-1,-1,1] = 8
-vec0 = to_linear((P0, M0), shape)
-raw_hybrid = odeint(J_hybrid, vec0, ts)
-
-raw_sim = []
-for _ in range(1000):
-    t = 0
-    P_sim = [12.0, 8.0]
-    print(f'#########{_}#########')
-    while t < T:
-        dt, dP = J_sim(P_sim)
-        t += dt
-        P_sim += dP
-    raw_sim.append(P_sim[1])
-
+# SAVE RESULTS
 with open('uses/lv/cache/run.pickle', 'wb') as f:
-    pickle.dump(
+    dill.dump(
         {
-            'MF': raw_MF,
-            'ME': raw_ME,
-            'hybrid': raw_hybrid,
-            'sim': raw_sim,
-            'n_c': n_c,
-            'N': N
+            'MF': MF,
+            'ME': ME,
+            'hybrid': hybrid,
+            'sim': sim,
+            'T': T
         }
     )
-
-# TODO the models should encapsulate result processing logic

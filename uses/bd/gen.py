@@ -1,17 +1,16 @@
+# IMPORTS
 from generators.utils import Transition, DEC, INC, Dir
 
-from generators.mean_field import build_mean_field_model
-from generators.master_equation import build_master_equation_model
-from generators.simulation import build_simulation_model
-from generators.hybrid import build_hybrid_model
+from generators.mean_field import MeanFieldModel
+from generators.master_equation import MasterEquationModel
+from generators.simulation import SimModel
+from generators.hybrid import HybridModel
 
-import numpy as np
-from scipy.integrate import odeint
-import pickle
+import dill
 
+# SETUP
 μ, ν = 1, 0.05
-T = 400
-ts = np.linspace(0, T, 1000)
+T = 50
 n_c = 8
 N = 30
 
@@ -22,41 +21,37 @@ transitions = [
     Transition({Dir('pop', DEC)}, lambda n: ν*n**2)
 ]
 
-J_MF = build_mean_field_model(dimensions, transitions)
-J_ME = build_master_equation_model(dimensions, (N,), transitions)
-J_hybrid = build_hybrid_model(dimensions, shape, transitions)
-J_sim = build_simulation_model(dimensions, transitions)
+# MODELS
+MF = MeanFieldModel(dimensions, None, transitions)
+means = MF.empty_world()
+means[0] = 1
+MF.run(means, T)
 
-raw_MF = odeint(J_MF, [1], ts)[-1]
+ME = MasterEquationModel(dimensions, (N,), transitions)
+P0 = ME.empty_world()
+P0[1] = 1
+ME.run(P0, T)
 
-P0_ME = np.zeros(N)
-P0_ME[1] = 1
-raw_ME = odeint(J_ME, P0_ME, ts)[-1]
+hybrid = HybridModel(dimensions, shape, transitions)
+P, M = hybrid.empty_world()
+P[1] = 1
+M[-1] = n_c
+hybrid.run((P, M), T)
 
-P0_hybrid = np.zeros(((n_c+1)*2))
-P0_hybrid[1]=1
-P0_hybrid[-1] = n_c
-raw_hybrid = odeint(J_hybrid, P0_hybrid, ts)[-1]
+sim = SimModel(dimensions, None, transitions)
+values = sim.empty_world()
+values[0] = 1
+sim.run(values, T)
 
-raw_sim = []
-for _ in range(1000):
-    t = 0
-    P_sim = [1.0]
-    while t < T:
-        dt, dP = J_sim(P_sim)
-        t += dt
-        P_sim += dP
-    raw_sim.append(P_sim[0])
-
+# SAVE RESULTS
 with open('uses/bd/cache/run.pickle', 'wb') as f:
-    pickle.dump(
+    dill.dump(
         {
-            'MF': raw_MF,
-            'ME': raw_ME,
-            'hybrid': raw_hybrid,
-            'sim': raw_sim,
-            'n_c': n_c,
-            'N': N
+            'MF': MF,
+            'ME': ME,
+            'hybrid': hybrid,
+            'sim': sim,
+            'T': T
         },
         f
     )

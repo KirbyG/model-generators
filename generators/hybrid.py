@@ -122,24 +122,27 @@ class HybridModel(Model):
         self.result = [self.to_shaped(world) for world in linear]
     
     def extract(self, P, M, ax):
-        p_slices = (slice(None),) * self.rank 
-        p_slices[ax] = slice(None, -1)
-        p = np.sum(P[p_slices], axis=tuple(set(range(self.rank))-{ax}))
+        p_slices = [slice(None)] * self.rank 
+        p_slices[ax] = slice(-1)
+        p = np.sum(P[tuple(p_slices)], axis=tuple(set(range(self.rank))-{ax}))
 
-        m_slices = (slice(None),) * self.rank
-        m_slices[ax] = slice(-1)
+        m_slices = [slice(None)] * self.rank
+        m_slices[ax] = slice(-1, None)
         m = zip(
-            P[m_slices].flatten(),
-            M[*m_slices, ax].flatten()
+            P[tuple(m_slices)].flatten(),
+            M[*tuple(m_slices), ax].flatten()
         )
 
         return p, m
 
     def mean(self, P, M, ax):
-        p, m = self.extract(P, M)
+        p, m = self.extract(P, M, ax)
 
         from_p = np.sum(p * range(self.shape[ax]))
+        # print(f'p:{from_p}')
+        # print(list(m))
         from_m = np.sum([t[0] * t[1] for t in m])
+        # print(f'm:{from_m}')
 
         return from_p + from_m
 
@@ -151,12 +154,24 @@ class HybridModel(Model):
         ax = self.dimensions.index(axis)
         n_c = self.shape[ax]
         P, M = self.result[-1]
+        # print(len(P))
+        # print(len(M))
         p, m = self.extract(P, M, ax)
+        # print(len(p))
+        # print(len(list(m)))
+        # print(list(m)[0])
 
         peak = self.mean(P, M, ax)
+        # print(peak)
+        # print(range(int(n_c), 3*int(peak)))
+        # print(np.array([Po(n, peak) for n in range(int(n_c), 3*int(peak))]))
+        # print([prob for prob in list(m)])
+        arr = np.array([np.array([Po(n, mean) for n in range(int(n_c), 3*int(peak))])*prob for prob, mean in m])
+        # print(arr)
         from_m = np.sum(
-            [[Po(n, mean) for n in range(n_c, 3*peak)]*prob for prob, mean in m],
+            arr,
             axis=0
         )
-
+        # print(len(p))
+        # print(len(from_m))
         return np.concatenate((p, from_m))

@@ -1,22 +1,36 @@
 import matplotlib.pyplot as plt
 import numpy as np
-from generators.utils import Po
-import pickle
+import dill
 
-MF, ME, hybrid, sim, n_c, N = tuple([None]*6)
+MF, ME, hybrid, sim, T = tuple([None]*5)
 with open('uses/bd/cache/run.pickle', 'rb') as f:
-    locals().update(pickle.load(f))
+    locals().update(dill.load(f))
 
-result_hybrid = np.concat((hybrid[:n_c], [Po(n,hybrid[-1]) for n in range(n_c, N)]))
+fig, (ts, dist) = plt.subplots(1, 2)
+legend = ['Mean-Field', 'Master-Equation', 'Hybrid', 'Simulation']
 
-counts = np.bincount(sim, minlength=N)[:N]
-result_sim = counts / len(sim)
+ts.plot(np.linspace(0, T, 4*T), MF.time_series('pop'), color='blue')
+ts.plot(np.linspace(0, T, 4*T), ME.time_series('pop'), color='orange')
+ts.plot(np.linspace(0, T, 4*T), hybrid.time_series('pop'), color='green')
+ts.scatter(*sim.time_series('pop'), color='red')
 
-plt.axvline(x=MF, color='r', linestyle='--', linewidth=2)
-plt.plot(range(N), ME)
-plt.plot(range(N), result_hybrid)
-plt.plot(range(N), result_sim)
-plt.xlabel('Population')
-plt.ylabel('Probability')
-plt.legend(['Mean-Field', 'Master-Equation', 'Hybrid', 'Simulation'])
+ts.set_xlabel('Time')
+ts.set_ylabel('Mean Pop')
+
+N = ME.shape[0]
+dist.axvline(x=MF.distribution('pop'), color='blue')
+dist.plot(range(N), ME.distribution('pop')[:N], color='orange')
+dist.plot(range(N), hybrid.distribution('pop')[:N], color='green')
+dist.plot(range(N), sim.distribution('pop')[:N], color='red')
+
+dist.set_xlabel('Pop')
+dist.set_ylabel('Prob')
+fig.legend(legend)
 plt.show()
+
+# QUESTIONS FOR LHD
+# asymmetric transitions
+# plotting sim results
+# known high-dim systems
+# validate LV against mean-flame paper backend
+# what is going on with the rho term?
