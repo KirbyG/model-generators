@@ -3,7 +3,7 @@ import numpy as np
 import dill
 
 MF, ME, hybrid, sim, T = tuple([None]*5)
-with open('uses/bd/cache/run.pickle', 'rb') as f:
+with open('uses/bd/cache/run16.pickle', 'rb') as f:
     locals().update(dill.load(f))
 
 fig, (ts, dist) = plt.subplots(1, 2)

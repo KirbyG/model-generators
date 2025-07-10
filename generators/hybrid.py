@@ -77,6 +77,8 @@ class HybridModel(Model):
                         critical_exits = critical_origins & ~critical_cells
                         critical_stays = critical_origins & critical_cells
                         log += f'##########f={" ".join(f"{dimensions[i]}={c}" for i,c in enumerate(cell))}:t={t}##########\n'
+
+                        #colors
                         # virtual transitions originate in critical dimensions that they fail to escape
                         if t.virtual and np.any(critical_stays!=self.mask(t.fails).astype(bool)):
                             log += 'virtual skip\n'

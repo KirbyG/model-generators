@@ -13,7 +13,7 @@ K = 20
 μ, ν, β = 0.04, 0.4, 0.06
 n_c = 3
 N = 20
-T = 100
+T = 300
 
 dimensions = ['fish', 'shark']
 shape = (n_c, n_c)
@@ -38,17 +38,17 @@ ME.run(P0, T)
 hybrid = HybridModel(dimensions, shape, transitions)
 P, M = hybrid.empty_world()
 P[n_c, n_c] = 1
-M[n_c, n_c][0] = 12
-M[n_c, n_c][1] = 8
 M[n_c, :, :] = 3
 M[:, n_c, :] = 3
+M[n_c, n_c][0] = 12
+M[n_c, n_c][1] = 8
 hybrid.run((P, M), T)
 
-sim = SimModel(dimensions, transitions)
+sim = SimModel(dimensions, None, transitions)
 values = sim.empty_world()
 values[0] = 12
 values[1] = 8
-sim.run(values, T)
+sim.run(values, T, trials=10)
 
 # SAVE RESULTS
 with open('uses/lv/cache/run.pickle', 'wb') as f:
@@ -59,5 +59,6 @@ with open('uses/lv/cache/run.pickle', 'wb') as f:
             'hybrid': hybrid,
             'sim': sim,
             'T': T
-        }
+        },
+        f
     )

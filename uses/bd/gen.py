@@ -11,7 +11,7 @@ import dill
 # SETUP
 μ, ν = 1, 0.05
 T = 50
-n_c = 8
+n_c = 16
 N = 30
 
 dimensions = ['pop']
@@ -44,7 +44,7 @@ values[0] = 1
 sim.run(values, T)
 
 # SAVE RESULTS
-with open('uses/bd/cache/run.pickle', 'wb') as f:
+with open('uses/bd/cache/run16.pickle', 'wb') as f:
     dill.dump(
         {
             'MF': MF,
