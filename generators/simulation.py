@@ -1,6 +1,6 @@
 import numpy as np
 from generators.model import Model
-from scipy.interpolate import interp1d
+from scipy.interpolate import make_smoothing_spline
 
 class SimModel(Model):
     def __init__(self, dimensions, _, transitions, verbose=False):
@@ -36,18 +36,18 @@ class SimModel(Model):
     
     def time_series(self, axis): # broken
         ax = self.dimensions.index(axis)
-        
-        interps = []
+
+        splines = []
         for trial in self.result:
             irreg_t = list(trial[:, 0])
             irreg_v = list(trial[:, ax+1])
-            interps.append(interp1d(irreg_t, irreg_v))
+            splines.append(make_smoothing_spline(irreg_t, irreg_v))
 
-        reg_ts = np.arange(0, self.T+1, 1)
-        reg_vs = np.empty(self.T+1)
-        for t in reg_ts:
-            reg_vs[t] = np.average([interp(t) for interp in interps])
-        return reg_ts, reg_vs
+        reg_ts = np.linspace(0, self.T, 4*self.T)
+        reg_vs = np.empty(len(reg_ts))
+        for i, t in enumerate(reg_ts):
+            reg_vs[i] = np.average([spline(t) for spline in splines])
+        return reg_vs
     
     def distribution(self, axis): # works
         ax = self.dimensions.index(axis)

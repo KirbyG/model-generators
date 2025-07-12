@@ -13,7 +13,8 @@ K = 20
 μ, ν, β = 0.04, 0.4, 0.06
 n_c = 3
 N = 20
-T = 300
+T = 200
+F0, S0 = 4, 5
 
 dimensions = ['fish', 'shark']
 shape = (n_c, n_c)
@@ -26,13 +27,13 @@ transitions = [
 # MODELS
 MF = MeanFieldModel(dimensions, None, transitions)
 means = MF.empty_world()
-means[0] = 12
-means[1] = 8
+means[0] = F0
+means[1] = S0
 MF.run(means, T)
 
 ME = MasterEquationModel(dimensions, (N,N), transitions)
 P0 = ME.empty_world()
-P0[12, 8] = 1
+P0[F0, S0] = 1
 ME.run(P0, T)
 
 hybrid = HybridModel(dimensions, shape, transitions)
@@ -40,18 +41,18 @@ P, M = hybrid.empty_world()
 P[n_c, n_c] = 1
 M[n_c, :, :] = 3
 M[:, n_c, :] = 3
-M[n_c, n_c][0] = 12
-M[n_c, n_c][1] = 8
+M[n_c, n_c][0] = F0
+M[n_c, n_c][1] = S0
 hybrid.run((P, M), T)
 
 sim = SimModel(dimensions, None, transitions)
 values = sim.empty_world()
-values[0] = 12
-values[1] = 8
-sim.run(values, T, trials=10)
+values[0] = F0
+values[1] = S0
+sim.run(values, T, trials=1000)
 
 # SAVE RESULTS
-with open('uses/lv/cache/run.pickle', 'wb') as f:
+with open('uses/lv/cache/run4-5.pickle', 'wb') as f:
     dill.dump(
         {
             'MF': MF,
