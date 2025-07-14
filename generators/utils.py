@@ -24,7 +24,7 @@ class Dir:
 DEC, INC = -1, 1
 class Transition:
     def mask(self, dirs):
-        arr = np.zeros(len, dtype='int')
+        arr = np.zeros(len(self.dimensions), dtype='int')
         for d in dirs:
             arr[self.dimensions.index(d.dim)] = d.sign
         return arr
@@ -44,4 +44,4 @@ class Transition:
         self.fails = self.mask(fails)
 
     def __str__(self):
-        return " ".join(f"{d.dim}|{d.sign}" for d in self.dirs)
+        return " ".join(f"{d.dim}|{d.sign}" for d in self.dirs_list)

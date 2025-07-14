@@ -36,12 +36,6 @@ class HybridModel(Model):
             # reshape states into joint prob and means
             P, M = self.to_shaped(states)
 
-            P = np.pad(
-                P,
-                [(0,1)]*self.rank,
-                mode='constant',
-                constant_values=0
-            )
             JP = np.zeros(self.shape)
 
             JM = np.zeros(self.extended_shape)
@@ -85,7 +79,7 @@ class HybridModel(Model):
                             continue
                         
                         # skip transitions originating below 0
-                        if np.any(origin==0):
+                        if np.any(origin==-1):
                             continue
                             
                         state = np.where(critical_stays, M[*origin], origin)
@@ -141,7 +135,7 @@ class HybridModel(Model):
     def mean(self, P, M, ax):
         p, m = self.extract(P, M, ax)
 
-        from_p = np.sum(p * range(self.shape[ax]))
+        from_p = np.sum(p * range(self.critical_points[ax]))
         # print(f'p:{from_p}')
         # print(list(m))
         from_m = np.sum([t[0] * t[1] for t in m])
