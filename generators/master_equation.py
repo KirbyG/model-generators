@@ -5,22 +5,22 @@ class MasterEquationModel(Model):
     def __init__(self, dimensions, shape, transitions, verbose=False):
         super().__init__(dimensions, shape, transitions, verbose=verbose)
         def J(states, _):
-            P = np.reshape(states, shape)
-            j = np.zeros(shape)
+            P = np.reshape(states, self.shape)
+            j = np.zeros(self.shape)
             with np.nditer(P, flags=['multi_index']) as it:
                 for _ in it:
-                    cell = it.multi_index
+                    cell = np.array(it.multi_index)
                     for t in transitions:
-                        origin = np.array(cell) - self.mask(t.dirs)
-                        if np.any(np.array(shape)==origin):
+                        origin = cell - t.dirs
+                        if np.any(shape==origin):
                             continue
                         if np.any(origin==-1):
                             continue
-                        dj = P[tuple(origin)] * t.func(*np.extract(self.mask(t.dirs), origin))
+                        dj = P[*origin] * t.func(*np.extract(t.dirs, origin))
                         if verbose:
                             print(f't={t}:{origin}--[{dj}]-->{cell}')
-                        j[cell] += dj
-                        j[tuple(origin)] -= dj
+                        j[*cell] += dj
+                        j[*origin] -= dj
             return j.flatten()
         self.J = J
     

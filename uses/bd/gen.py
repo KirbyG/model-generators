@@ -17,8 +17,8 @@ N = 30
 dimensions = ['pop']
 shape = (n_c,)
 transitions = [
-    Transition({Dir('pop', INC)}, lambda n: μ*n),
-    Transition({Dir('pop', DEC)}, lambda n: ν*n**2)
+    Transition({Dir('pop', INC)}, lambda n: μ*n, dimensions),
+    Transition({Dir('pop', DEC)}, lambda n: ν*n**2, dimensions)
 ]
 
 # MODELS

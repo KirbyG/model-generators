@@ -17,11 +17,11 @@ T = 200
 F0, S0 = 4, 5
 
 dimensions = ['fish', 'shark']
-shape = (n_c, n_c)
+critical_points = (n_c, n_c)
 transitions = [
-    Transition({Dir('fish', INC)}, lambda f: μ*f*(K-f)),
-    Transition({Dir('shark', DEC)}, lambda s: ν*s),
-    Transition({Dir('fish', DEC), Dir('shark', INC)}, lambda f,s: β*f*s),
+    Transition({Dir('fish', INC)}, lambda f: μ*f*(K-f), dimensions),
+    Transition({Dir('shark', DEC)}, lambda s: ν*s, dimensions),
+    Transition({Dir('fish', DEC), Dir('shark', INC)}, lambda f,s: β*f*s, dimensions),
 ]
 
 # MODELS
@@ -36,7 +36,7 @@ P0 = ME.empty_world()
 P0[F0, S0] = 1
 ME.run(P0, T)
 
-hybrid = HybridModel(dimensions, shape, transitions)
+hybrid = HybridModel(dimensions, critical_points, transitions)
 P, M = hybrid.empty_world()
 P[n_c, n_c] = 1
 M[n_c, :, :] = 3

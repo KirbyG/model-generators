@@ -3,18 +3,12 @@ import numpy as np
 from typing import List
 
 class Model(ABC):
-    def mask(self, dirs):
-        arr = np.zeros(self.rank, dtype='int')
-        for d in dirs:
-            arr[self.dimensions.index(d.dim)] = d.sign
-        return arr
-
     dimensions: List
 
     @abstractmethod
     def __init__(self, dimensions, shape, transitions, verbose=False):
         self.dimensions = dimensions
-        self.shape = shape
+        self.shape = np.array(shape)
         self.transitions = transitions
         self.verbose = verbose
 

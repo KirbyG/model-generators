@@ -8,7 +8,7 @@ class MeanFieldModel(Model):
         def J(states, _):
             j = np.zeros(len(states))
             for t in transitions:
-                j += self.mask(t.dirs)*t.func(*np.extract(self.mask(t.dirs), states))
+                j += t.dirs*t.func(*np.extract(t.dirs, states))
             return j
         self.J = J
 

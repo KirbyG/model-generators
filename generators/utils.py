@@ -1,6 +1,6 @@
 import numpy as np
 from itertools import chain, combinations
-from typing import Set, Callable
+from typing import Set, Callable, List
 from scipy.stats import poisson
 Po = poisson.pmf
 
@@ -23,17 +23,25 @@ class Dir:
 
 DEC, INC = -1, 1
 class Transition:
+    def mask(self, dirs):
+        arr = np.zeros(len, dtype='int')
+        for d in dirs:
+            arr[self.dimensions.index(d.dim)] = d.sign
+        return arr
     def __init__(
         self,
         dirs: Set[Dir],
         func: Callable,
+        dimensions: List[str],
         virtual: bool = False,
         fails: Set[Dir] = {}
     ):
-        self.dirs = dirs
+        self.dirs_list = dirs
+        self.dimensions = dimensions
+        self.dirs = self.mask(dirs)
         self.func = func
         self.virtual = virtual
-        self.fails = fails
+        self.fails = self.mask(fails)
 
     def __str__(self):
         return " ".join(f"{d.dim}|{d.sign}" for d in self.dirs)

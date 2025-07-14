@@ -6,13 +6,13 @@ class SimModel(Model):
     def __init__(self, dimensions, _, transitions, verbose=False):
         super().__init__(dimensions, _, transitions, verbose=verbose)
         def J(P):
-            rates = [t.func(*np.extract(self.mask(t.dirs), P)) for t in transitions]
+            rates = [t.func(*np.extract(t.dirs, P)) for t in transitions]
             R = np.sum(rates)
             if R == 0:
                 return 1, [0]*len(dimensions)
             dt = np.random.exponential(1/R)
             t = np.random.choice(transitions, p=rates/R)
-            j = self.mask(t.dirs)
+            j = t.dirs
             return dt, j
         self.J = J
     
