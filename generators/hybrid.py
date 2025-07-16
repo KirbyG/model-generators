@@ -2,6 +2,8 @@ import numpy as np
 from scipy.integrate import odeint
 from generators.utils import powerset, Transition, DEC, Po
 from generators.model import Model
+import matplotlib.pyplot as plt
+from matplotlib.animation import FuncAnimation
 
 class HybridModel(Model):
     def to_shaped(self, states: np.ndarray):
@@ -28,6 +30,7 @@ class HybridModel(Model):
                 transitions.append(Transition(
                     t.dirs_list-subset,
                     t.func,
+                    t.dimensions,
                     virtual=True,
                     fails=subset
                 ))
@@ -115,6 +118,7 @@ class HybridModel(Model):
         return self.to_shaped(np.zeros(self.num_states + np.prod(self.extended_shape)))
     
     def run(self, initial_conditions, T):
+        self.T = T
         linear = odeint(self.J, self.to_linear(*initial_conditions), np.linspace(0, T, 4*T))
         self.result = [self.to_shaped(world) for world in linear]
     
@@ -151,24 +155,29 @@ class HybridModel(Model):
         ax = self.dimensions.index(axis)
         n_c = self.shape[ax]
         P, M = self.result[-1]
-        # print(len(P))
-        # print(len(M))
+
         p, m = self.extract(P, M, ax)
-        # print(len(p))
-        # print(len(list(m)))
-        # print(list(m)[0])
+
 
         peak = self.mean(P, M, ax)
-        # print(peak)
-        # print(range(int(n_c), 3*int(peak)))
-        # print(np.array([Po(n, peak) for n in range(int(n_c), 3*int(peak))]))
-        # print([prob for prob in list(m)])
+
         arr = np.array([np.array([Po(n, mean) for n in range(int(n_c), 3*int(peak))])*prob for prob, mean in m])
-        # print(arr)
         from_m = np.sum(
             arr,
             axis=0
         )
-        # print(len(p))
-        # print(len(from_m))
+
         return np.concatenate((p, from_m))
+    
+    def animation(self, axes):
+        cmap = plt.cm.get_cmap('viridis')
+        fig, ax = plt.subplots()
+        # plt.imshow(np.log10(data + epsilon), cmap='viridis')
+        img = ax.imshow(np.log10(self.result[0][0]+1e-10), cmap=cmap, animated=True)
+
+        def update(frame):
+            img.set_array(np.log10(self.result[frame][0]+1e-10))
+            return [img]
+
+        anim  = FuncAnimation(fig, update, frames=self.T+1)
+        return anim

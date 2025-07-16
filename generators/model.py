@@ -29,3 +29,7 @@ class Model(ABC):
     @abstractmethod
     def distribution(self, axis):
         pass
+
+    @abstractmethod
+    def animation(self, axes):
+        pass

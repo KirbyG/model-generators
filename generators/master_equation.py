@@ -1,6 +1,8 @@
 import numpy as np
 from scipy.integrate import odeint
 from generators.model import Model
+import matplotlib.pyplot as plt
+from matplotlib.animation import FuncAnimation
 class MasterEquationModel(Model):
     def __init__(self, dimensions, shape, transitions, verbose=False):
         super().__init__(dimensions, shape, transitions, verbose=verbose)
@@ -28,6 +30,7 @@ class MasterEquationModel(Model):
         return np.zeros(self.shape)
     
     def run(self, P0: np.ndarray, T):
+        self.T = T
         ts = np.linspace(0, T, 4*T)
         self.result = np.reshape(
             odeint(self.J, P0.flatten(), ts),
@@ -44,3 +47,16 @@ class MasterEquationModel(Model):
     def distribution(self, axis):
         ax = self.dimensions.index(axis)
         return np.sum(self.result[-1], axis=tuple((set(range(self.rank))-{ax})))
+    
+    def animation(self, axes):
+        cmap = plt.cm.get_cmap('viridis')
+        fig, ax = plt.subplots()
+        # plt.imshow(np.log10(data + epsilon), cmap='viridis')
+        img = ax.imshow(np.log10(self.result[0, :, :]+1e-10), cmap=cmap, animated=True)
+
+        def update(frame):
+            img.set_array(np.log10(self.result[frame, :, :]+1e-10))
+            return [img]
+
+        anim  = FuncAnimation(fig, update, frames=self.T+1)
+        return anim

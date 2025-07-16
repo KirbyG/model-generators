@@ -26,3 +26,6 @@ class MeanFieldModel(Model):
         ax = self.dimensions.index(axis)
         mean = self.result[-1, ax]
         return mean
+    
+    def animation(self, axes):
+        return super().animation(axes)

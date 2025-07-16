@@ -19,25 +19,21 @@ legend = [
 ]
 ts = np.linspace(0, T, 4*T)
 
-# print(hybrid.time_series('fish'))
-# print(np.sum(np.isnan(hybrid.time_series('fish'))))
+# series.plot(ts, MF.time_series('fish'), color='blue', linestyle='dashed')
+# series.plot(ts, ME.time_series('fish'), color='orange', linestyle='dashed')
+# series.plot(ts, hybrid.time_series('fish'), color='green', linestyle='dashed')
+# series.plot(ts, sim.time_series('fish'), color='red', linestyle='dashed')
 
-# print(hybrid.result)
+# series.plot(ts, MF.time_series('shark'), color='blue')
+# series.plot(ts, ME.time_series('shark'), color='orange')
+# series.plot(ts, hybrid.time_series('shark'), color='green')
+# series.plot(ts, sim.time_series('shark'), color='red')
 
-series.plot(ts, MF.time_series('fish'), color='blue', linestyle='dashed')
-series.plot(ts, ME.time_series('fish'), color='orange', linestyle='dashed')
-series.plot(ts, hybrid.time_series('fish'), color='green', linestyle='dashed')
-series.plot(ts, sim.time_series('fish'), color='red', linestyle='dashed')
+# series.set_xlabel('Time')
+# series.set_ylabel('Mean Pop')
 
-series.plot(ts, MF.time_series('shark'), color='blue')
-series.plot(ts, ME.time_series('shark'), color='orange')
-series.plot(ts, hybrid.time_series('shark'), color='green')
-series.plot(ts, sim.time_series('shark'), color='red')
+# fig.legend(legend)
+# plt.show()
 
-series.set_xlabel('Time')
-series.set_ylabel('Mean Pop')
-
-
-
-fig.legend(legend)
+anim = hybrid.animation(None)
 plt.show()

@@ -56,3 +56,6 @@ class SimModel(Model):
             vs.append(trial[-1][ax+1])
         counts = np.bincount(vs, minlength=3*int(max(vs)))
         return counts / len(vs)
+    
+    def animation(self, axes):
+        return super().animation(axes)
