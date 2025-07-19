@@ -18,6 +18,10 @@ class HybridModel(Model):
         return np.concatenate((P.flatten(), M.flatten()))
     
     def __init__(self, dimensions, critical_points, base_transitions, verbose=False):
+        """
+        
+        verbose: Specify a cell to watch
+        """
         self.critical_points = np.array(critical_points)
         super().__init__(dimensions, self.critical_points+1, base_transitions, verbose=verbose)
         self.extended_shape = np.append(self.shape+1, [self.rank])
@@ -122,7 +126,16 @@ class HybridModel(Model):
         linear = odeint(self.J, self.to_linear(*initial_conditions), np.linspace(0, T, 4*T))
         self.result = [self.to_shaped(world) for world in linear]
     
-    def extract(self, P, M, ax):
+    def extract_dimension(self, P, M, ax):
+        """
+        Sum over every dimension except _ax_.
+
+        Returns
+        -------
+        p,m
+        p = P0, P1, ..., P_{n_c-1} in the given dimension.
+        m = List of (prob, mean) for every cell in the critical regime for the given dimension.
+        """
         p_slices = [slice(None)] * self.rank 
         p_slices[ax] = slice(-1)
         p = np.sum(P[tuple(p_slices)], axis=tuple(set(range(self.rank))-{ax}))
@@ -133,11 +146,12 @@ class HybridModel(Model):
             P[tuple(m_slices)].flatten(),
             M[*tuple(m_slices), ax].flatten()
         )
-
+        print(p)
+        print(m)
         return p, m
 
     def mean(self, P, M, ax):
-        p, m = self.extract(P, M, ax)
+        p, m = self.extract_dimension(P, M, ax)
 
         from_p = np.sum(p * range(self.critical_points[ax]))
         # print(f'p:{from_p}')
@@ -156,7 +170,7 @@ class HybridModel(Model):
         n_c = self.shape[ax]
         P, M = self.result[-1]
 
-        p, m = self.extract(P, M, ax)
+        p, m = self.extract_dimension(P, M, ax)
 
 
         peak = self.mean(P, M, ax)

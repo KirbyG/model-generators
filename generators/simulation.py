@@ -1,9 +1,25 @@
 import numpy as np
 from generators.model import Model
 from scipy.interpolate import make_smoothing_spline
+from generators.utils import Transition
+from typing import List
 
 class SimModel(Model):
-    def __init__(self, dimensions, _, transitions, verbose=False):
+    def __init__(self, dimensions, _, transitions: List[Transition], verbose=False):
+        """
+        Create a model using the `next-reaction simulation method <https://en.wikipedia.org/wiki/Gillespie_algorithm>`_
+        
+        Parameters
+        ----------
+        dimensions : List[str]
+            Names for the dimensions of the system.
+        _ : any
+            Shape parameter is unused for this model type.
+        transitions : List[Transition]
+            Specify rates and directions of model transitions.
+        verbose : bool
+            Indicate whether the model should log output.
+        """
         super().__init__(dimensions, _, transitions, verbose=verbose)
         def J(P):
             rates = [t.func(*np.extract(t.dirs, P)) for t in transitions]
@@ -17,9 +33,11 @@ class SimModel(Model):
         self.J = J
     
     def empty_world(self):
+        """Return a vector of zeroes with length equal to the rank of the system."""
         return np.zeros(self.rank)
     
     def run(self, initial_conditions, T, trials=1000):
+        """Run _trials_ next-reaction simulations up to time T, starting from initial_conditions."""
         self.T = T
         result = []
         for _ in range(trials):
@@ -34,7 +52,8 @@ class SimModel(Model):
             result.append(trial)
         self.result = result #List of time series of vector
     
-    def time_series(self, axis): # broken
+    def time_series(self, axis):
+        """View results in the given dimension as a time-series, averaged over all runs."""
         ax = self.dimensions.index(axis)
 
         splines = []
@@ -49,7 +68,8 @@ class SimModel(Model):
             reg_vs[i] = np.average([spline(t) for spline in splines])
         return reg_vs
     
-    def distribution(self, axis): # works
+    def distribution(self, axis):
+        """View results in the given dimension as a distribution over runs at time T."""
         ax = self.dimensions.index(axis)
         vs = []
         for trial in self.result:
